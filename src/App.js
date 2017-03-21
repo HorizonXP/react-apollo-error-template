@@ -20,6 +20,7 @@ class App extends Component {
           </p>
           <p>
             The GraphQL schema is in <code>./src/graphql/schema</code>.
+            t
             Currently the schema just serves a list of people with names and ids.
           </p>
         </header>
@@ -28,9 +29,9 @@ class App extends Component {
         ) : (
           <div>
             <button onClick={loadMore}>Load more...</button>
-            <button onClick={() => { setId(newId); loadMore() }}>Set Id to {newId} and load more...</button>
+            <button onClick={() => { setId(newId); loadMore(newId) }}>Set Id to {newId} and load more...</button>
             <ul>
-              {people.map(person => (
+              {people && people.map(person => (
                 <li key={person.id}>
                   {person.id} - {person.name}
                 </li>
@@ -53,13 +54,10 @@ const gqlQuery = graphql(
   {
     options: ({ id }) => ({
       variables: {
-        id
+        id: id
       }
     }),
     props: ({
-      ownProps: {
-        id
-      },
       data: {
         loading,
         people,
@@ -69,10 +67,10 @@ const gqlQuery = graphql(
       return {
         loading,
         people,
-        loadMore() {
+        loadMore(newId) {
           return fetchMore({
             variables: {
-              id,
+              id: newId,
               lastId: people[people.length - 1].id // last Id for which we already have data
             },
             updateQuery: (prev, { fetchMoreResult }) => {
