@@ -95,7 +95,12 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = DirectoryActions;
 
+const reduxOptions = {
+  areStatesEqual: (prev, next) => prev.apollo === next.apollo,
+  areStatePropsEqual: () => true // would update to skip id key
+};
+
 export default compose(
-  connect(mapStateToProps, mapDispatchToProps),
+  connect(mapStateToProps, mapDispatchToProps, null, reduxOptions),
   gqlQuery
 )(App)
