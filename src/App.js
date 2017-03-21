@@ -76,12 +76,12 @@ const gqlQuery = graphql(
               lastId: people[people.length - 1].id // last Id for which we already have data
             },
             updateQuery: (prev, { fetchMoreResult }) => {
-              if (!fetchMoreResult.directory) {
+              if (!fetchMoreResult.people) {
                 return prev;
               }
               return {
                 ...prev,
-                directory: [...prev.directory, ...fetchMoreResult.directory]
+                people: [...prev.people, ...fetchMoreResult.people]
               }
             }
           });
