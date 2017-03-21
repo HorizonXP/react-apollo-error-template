@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
-import { gql, graphql } from 'react-apollo';
+import { compose, gql, graphql } from 'react-apollo';
+import { connect } from 'react-redux';
+import * as DirectoryActions from './reducers/directory';
 
 class App extends Component {
   render() {
-    const { data: { loading, people } } = this.props;
+    const { loading, people, setId, loadMore } = this.props;
+    const newId = people ? people[people.length - 5].id : 1;
     return (
       <main>
         <header>
@@ -23,24 +26,78 @@ class App extends Component {
         {loading ? (
           <p>Loading…</p>
         ) : (
-          <ul>
-            {people.map(person => (
-              <li key={person.id}>
-                {person.name}
-              </li>
-            ))}
-          </ul>
+          <div>
+            <button onClick={loadMore}>Load more...</button>
+            <button onClick={() => { setId(newId); loadMore() }}>Set Id to {newId} and load more...</button>
+            <ul>
+              {people.map(person => (
+                <li key={person.id}>
+                  {person.id} - {person.name}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </main>
     );
   }
 }
 
-export default graphql(
-  gql`{
-    people {
+const gqlQuery = graphql(
+  gql`query Directory($id: ID!, $lastId: ID) {
+    people(id: $id, lastId: $lastId) {
       id
       name
     }
   }`,
+  {
+    options: ({ id }) => ({
+      variables: {
+        id
+      }
+    }),
+    props: ({
+      ownProps: {
+        id
+      },
+      data: {
+        loading,
+        people,
+        fetchMore
+      }
+    }) => {
+      return {
+        loading,
+        people,
+        loadMore() {
+          return fetchMore({
+            variables: {
+              id,
+              lastId: people[people.length - 1].id // last Id for which we already have data
+            },
+            updateQuery: (prev, { fetchMoreResult }) => {
+              if (!fetchMoreResult.directory) {
+                return prev;
+              }
+              return {
+                ...prev,
+                directory: [...prev.directory, ...fetchMoreResult.directory]
+              }
+            }
+          });
+        }
+      }
+    }
+  }
+);
+
+const mapStateToProps = state => ({
+  id: state.directory.id
+})
+
+const mapDispatchToProps = DirectoryActions;
+
+export default compose(
+  connect(mapStateToProps, mapDispatchToProps),
+  gqlQuery
 )(App)
